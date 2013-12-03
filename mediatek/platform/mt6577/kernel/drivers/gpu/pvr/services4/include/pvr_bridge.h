@@ -242,6 +242,9 @@ typedef struct PVRSRV_BRIDGE_PACKAGE_TAG
 #else
 	IMG_HANDLE				hKernelServices;		
 #endif
+#if defined (MTK_DEBUG)
+	IMG_CHAR				acDebugMsg[MTK_DEBUG_MSG_LENGTH];
+#endif
 }PVRSRV_BRIDGE_PACKAGE;
 
 

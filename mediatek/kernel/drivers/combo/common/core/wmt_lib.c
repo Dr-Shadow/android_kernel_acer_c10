@@ -1642,3 +1642,7 @@ INT32 wmt_lib_notify_stp_sleep()
 	return iRet;
 }
 
+INT32 wmt_lib_set_stp_wmt_last_close(UINT32 value)
+{
+	  return mtk_wcn_stp_set_wmt_last_close(value);
+}

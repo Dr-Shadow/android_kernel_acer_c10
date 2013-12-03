@@ -1,3 +1,38 @@
+/*****************************************************************************
+ *  Copyright Statement:
+ *  --------------------
+ *  This software is protected by Copyright and the information contained
+ *  herein is confidential. The software may not be copied and the information
+ *  contained herein may not be used or disclosed except with the written
+ *  permission of MediaTek Inc. (C) 2008
+ *
+ *  BY OPENING THIS FILE, BUYER HEREBY UNEQUIVOCALLY ACKNOWLEDGES AND AGREES
+ *  THAT THE SOFTWARE/FIRMWARE AND ITS DOCUMENTATIONS ("MEDIATEK SOFTWARE")
+ *  RECEIVED FROM MEDIATEK AND/OR ITS REPRESENTATIVES ARE PROVIDED TO BUYER ON
+ *  AN "AS-IS" BASIS ONLY. MEDIATEK EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT.
+ *  NEITHER DOES MEDIATEK PROVIDE ANY WARRANTY WHATSOEVER WITH RESPECT TO THE
+ *  SOFTWARE OF ANY THIRD PARTY WHICH MAY BE USED BY, INCORPORATED IN, OR
+ *  SUPPLIED WITH THE MEDIATEK SOFTWARE, AND BUYER AGREES TO LOOK ONLY TO SUCH
+ *  THIRD PARTY FOR ANY WARRANTY CLAIM RELATING THERETO. MEDIATEK SHALL ALSO
+ *  NOT BE RESPONSIBLE FOR ANY MEDIATEK SOFTWARE RELEASES MADE TO BUYER'S
+ *  SPECIFICATION OR TO CONFORM TO A PARTICULAR STANDARD OR OPEN FORUM.
+ *
+ *  BUYER'S SOLE AND EXCLUSIVE REMEDY AND MEDIATEK'S ENTIRE AND CUMULATIVE
+ *  LIABILITY WITH RESPECT TO THE MEDIATEK SOFTWARE RELEASED HEREUNDER WILL BE,
+ *  AT MEDIATEK'S OPTION, TO REVISE OR REPLACE THE MEDIATEK SOFTWARE AT ISSUE,
+ *  OR REFUND ANY SOFTWARE LICENSE FEES OR SERVICE CHARGE PAID BY BUYER TO
+ *  MEDIATEK FOR SUCH MEDIATEK SOFTWARE AT ISSUE.
+ *
+ *  THE TRANSACTION CONTEMPLATED HEREUNDER SHALL BE CONSTRUED IN ACCORDANCE
+ *  WITH THE LAWS OF THE STATE OF CALIFORNIA, USA, EXCLUDING ITS CONFLICT OF
+ *  LAWS PRINCIPLES.  ANY DISPUTES, CONTROVERSIES OR CLAIMS ARISING THEREOF AND
+ *  RELATED THERETO SHALL BE SETTLED BY ARBITRATION IN SAN FRANCISCO, CA, UNDER
+ *  THE RULES OF THE INTERNATIONAL CHAMBER OF COMMERCE (ICC).
+ *
+ *****************************************************************************/
+
 #include <linux/interrupt.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
@@ -55,11 +90,7 @@ static UINT32 check_line_offset = 0;
 static bool is_used_tar_size_for_hqa =false;
 #define IS_HQA() (is_used_tar_size_for_hqa == true)
 
-#ifdef TVOUT_FWVGA_SUPPORT
-#define FIXED_FWVGA_PARAMS  1
-#else
 #define FIXED_WVGA_PARAMS  1
-#endif
 
 #if FIXED_WVGA_PARAMS
 
@@ -89,33 +120,7 @@ static bool is_used_tar_size_for_hqa =false;
 #define TV_OUTPUT_OFFSET_Y      (IS_HQA() ? TV_OUTPUT_OFFSET_Y_HQA : TV_OUTPUT_OFFSET_Y_NORMAL)
 #define TV_OUTPUT_WIDTH        (IS_HQA() ? TV_OUTPUT_WIDTH_HQA : TV_OUTPUT_WIDTH_NORMAL)
 #define TV_OUTPUT_HEIGHT    (IS_HQA() ? TV_OUTPUT_HEIGHT_HQA : TV_OUTPUT_HEIGHT_NORMAL)
-#elif defined(FIXED_FWVGA_PARAMS)
-#define IS_NTSC() (TVC_NTSC == _tvcContext.tvType)
-#define IS_HORI() (_tvcContext.srcSize.width > _tvcContext.srcSize.height)
 
-#define TV_OUTPUT_WIDTH_HORI       (640)
-#define TV_OUTPUT_HEIGHT_HORI      (IS_NTSC() ? 442 : 534)
-#define TV_OUTPUT_OFFSET_X_HORI    (32)
-
-#define TV_OUTPUT_WIDTH_VERT       (IS_NTSC() ? 248 : 300)
-#define TV_OUTPUT_HEIGHT_VERT      (IS_NTSC() ? 442 : 534)
-#define TV_OUTPUT_OFFSET_X_VERT    (IS_NTSC() ? 216 : 208)
-
-#define TV_OUTPUT_WIDTH_NORMAL            (IS_HORI() ? TV_OUTPUT_WIDTH_HORI : TV_OUTPUT_WIDTH_VERT)
-#define TV_OUTPUT_HEIGHT_NORMAL           (IS_HORI() ? TV_OUTPUT_HEIGHT_HORI : TV_OUTPUT_HEIGHT_VERT)
-#define TV_OUTPUT_OFFSET_X_NORMAL         (IS_HORI() ? TV_OUTPUT_OFFSET_X_HORI : TV_OUTPUT_OFFSET_X_VERT)
-#define TV_OUTPUT_OFFSET_Y_NORMAL         (32)
-
-
-#define TV_OUTPUT_WIDTH_HQA        (720)
-#define TV_OUTPUT_HEIGHT_HQA       (IS_NTSC() ? 480 : 576)
-#define TV_OUTPUT_OFFSET_X_HQA     (0)
-#define TV_OUTPUT_OFFSET_Y_HQA     (0)
-
-#define TV_OUTPUT_OFFSET_X      (IS_HQA() ? TV_OUTPUT_OFFSET_X_HQA : TV_OUTPUT_OFFSET_X_NORMAL)
-#define TV_OUTPUT_OFFSET_Y      (IS_HQA() ? TV_OUTPUT_OFFSET_Y_HQA : TV_OUTPUT_OFFSET_Y_NORMAL)
-#define TV_OUTPUT_WIDTH        (IS_HQA() ? TV_OUTPUT_WIDTH_HQA : TV_OUTPUT_WIDTH_NORMAL)
-#define TV_OUTPUT_HEIGHT    (IS_HQA() ? TV_OUTPUT_HEIGHT_HQA : TV_OUTPUT_HEIGHT_NORMAL)
 #else
 #error "un-implemented"
 #endif
@@ -399,7 +404,7 @@ static TVC_STATUS _ConfigTarSize(void)
 
 
 
-#if defined(FIXED_WVGA_PARAMS) || defined(FIXED_FWVGA_PARAMS)
+#if FIXED_WVGA_PARAMS
     tarSize.width  = TV_OUTPUT_WIDTH;
     tarSize.height = TV_OUTPUT_HEIGHT;
 #else
@@ -420,7 +425,7 @@ static TVC_STATUS _ConfigFullDisplayRegion(void)
 {
     UINT32 startPixel, startLine;
 
-#if defined(FIXED_WVGA_PARAMS) || defined(FIXED_FWVGA_PARAMS)
+#if FIXED_WVGA_PARAMS
     startPixel = TV_OUTPUT_OFFSET_X;
     startLine  = TV_OUTPUT_OFFSET_Y;
 #endif
@@ -700,8 +705,8 @@ TVC_STATUS TVC_SetSrcYUVAddr(UINT32 Y, UINT32 U, UINT32 V)
 TVC_STATUS TVC_SetSrcSize(UINT32 width, UINT32 height)
 {
     //TV_INFO("width %d, height %d\n", width, height);
-    //ASSERT((width  & 0x3) == 0);    // multiple of 4
-    //ASSERT((height & 0x3) == 0);    // multiple of 4
+    ASSERT((width  & 0x3) == 0);    // multiple of 4
+    ASSERT((height & 0x3) == 0);    // multiple of 4
     //width = 480;
     //height = 400;
 

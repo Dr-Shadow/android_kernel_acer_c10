@@ -30,6 +30,9 @@
 
 #include "img_types.h"
 
+#ifdef MTK_DEBUG
+#include "mtk_debug.h"
+#endif
 
 #if defined (__cplusplus)
 extern "C" {

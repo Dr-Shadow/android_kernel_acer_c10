@@ -1397,7 +1397,6 @@ static int mt_i2c_do_transfer(struct mt_i2c *i2c, struct i2c_msg *msgs, int num)
     return num;
 }
 //int mt_i2c_trigger_flag = 0;
-extern void I2C1_Path_select(u32 slave_address);
 
 static int mt_i2c_transfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
 {
@@ -1426,14 +1425,9 @@ static int mt_i2c_transfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int 
 			mt_show_current_irq_counts();	
 			dev_err(i2c->dev, "PMIC error, reboot system,%d\n",irqs_disabled());
 			dump_stack();
-			BUG();	
+			//BUG();	//green_yuan delete for fix bug2028, mtk patch, 20121224
 		}
-	}
-	else if(i2c->id == 1){
-		I2C1_Path_select((msgs->addr& I2C_MASK_FLAG));
-		ret = mt_i2c_do_transfer(i2c, msgs, num);
-	}
-	else{
+	}else{
 		ret = mt_i2c_do_transfer(i2c, msgs, num);
 	}
 #ifdef I2C_CLOCK    

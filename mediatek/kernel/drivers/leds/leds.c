@@ -113,6 +113,18 @@ struct mt65xx_led_data {
 	int delay_off;
 };
 
+struct bl_level
+{
+        int dim;
+        int cur;
+};
+
+
+struct bl_level led_bl_level[24]= {{0x4,6}, {0x4,6}, {0x4,7}, {0x4,8}, {0x4,9}, {0x4,10}, {0x4,11},
+                                    {0x4,12}, {0x4,13}, {0x4,14}, {0x4,15}, {0x5,13}, {0x5,14},
+                                    {0x5,15}, {0x6,13}, {0x6,14}, {0x6,15},{0x7,14},
+                                    {0x7,15},{0x8,14},{0x9,15},{0xA,15},{0xB,15},{0xC,15}};
+
 
 /****************************************************************************
  * function prototypes
@@ -350,7 +362,7 @@ static int led_blink_pmic(enum mt65xx_led_pmic pmic_type, struct nled_setting* l
 	int duty = 0;
 	LEDS_DEBUG("[LED]led_blink_pmic: pmic_type=%d\n", pmic_type);  
 	
-	if((pmic_type != MT65XX_LED_PMIC_NLED_ISINK4 && pmic_type!= MT65XX_LED_PMIC_NLED_ISINK5) || led->nled_mode != NLED_BLINK) {
+	if((pmic_type != MT65XX_LED_PMIC_NLED_ISINK4 && pmic_type!= MT65XX_LED_PMIC_NLED_ISINK5 && pmic_type!= MT65XX_LED_PMIC_NLED_ISINK0) || led->nled_mode != NLED_BLINK) {
 		return -1;
 	}
 				
@@ -378,6 +390,16 @@ static int led_blink_pmic(enum mt65xx_led_pmic pmic_type, struct nled_setting* l
 			pmic_bank1_config_interface(0x30, pmic_clksel_array[time_index], 0x3, 0x6);
 			upmu_top2_bst_drv_ck_pdn(0x0);
 			hwBacklightISINKTurnOn(MT65XX_LED_PMIC_NLED_ISINK5);
+	   		break;
+		case MT65XX_LED_PMIC_NLED_ISINK0:
+			upmu_isinks_ch0_mode(PMIC_PWM_2);
+			upmu_isinks_ch0_step(0x3);
+			upmu_isinks_ch0_cabc_en(0);
+			upmu_isinks_dim2_duty(duty);
+			upmu_isinks_dim2_fsel(pmic_freqsel_array[time_index]);
+			pmic_bank1_config_interface(0x30, pmic_clksel_array[time_index], 0x3, 0x6);
+			upmu_top2_bst_drv_ck_pdn(0x0);
+			hwBacklightISINKTurnOn(MT65XX_LED_PMIC_NLED_ISINK0);
 		break;
 		default:
 		break;
@@ -575,39 +597,38 @@ static int brightness_set_pmic(enum mt65xx_led_pmic pmic_type, u32 level, u32 di
 			
 			level = brightness_mapping(tmp_level);
 			if(level == ERROR_BL_LEVEL)
-				level = tmp_level/42;
-	
+				level = 7;
 			upmu_boost_isink_hw_sel(0x1);
 			upmu_boost_mode(3);
 			upmu_boost_cabc_en(0);
 
 			switch(level)
 			{
-				case 0:				
+				case 1:				
 					upmu_boost_vrsel(0x0);
 					//hwPWMsetting(PMIC_PWM_0, 0, 0x15);
 					break;
-				case 1:
+				case 2:
 					upmu_boost_vrsel(0x1);
 					//hwPWMsetting(PMIC_PWM_0, 4, 0x15);
 					break;
-				case 2:
+				case 3:
 					upmu_boost_vrsel(0x2);
 					//hwPWMsetting(PMIC_PWM_0, 5, 0x15);
 					break;
-				case 3:
+				case 4:
 					upmu_boost_vrsel(0x3);
 					//hwPWMsetting(PMIC_PWM_0, 6, 0x15);
 					break;
-				case 4:
+				case 5:
 					upmu_boost_vrsel(0x5);
 					//hwPWMsetting(PMIC_PWM_0, 7, 0x15);
 					break;
-				case 5:
+				case 6:
 					upmu_boost_vrsel(0x8);
 					//hwPWMsetting(PMIC_PWM_0, 8, 0x15);
 					break;
-				case 6:
+				case 7:
 					upmu_boost_vrsel(0xB);
 					//hwPWMsetting(PMIC_PWM_0, 9, 0x15);
 					break;
@@ -615,6 +636,12 @@ static int brightness_set_pmic(enum mt65xx_led_pmic pmic_type, u32 level, u32 di
 					printk("[LED] invalid brightness level %d->%d\n", tmp_level, level);
 					break;
 			}
+
+            if(level == 999)
+            {
+                upmu_boost_vrsel(0x0);
+            }
+
 			
 			upmu_top2_bst_drv_ck_pdn(0x0);
 			upmu_boost_en(0x1);
@@ -627,29 +654,63 @@ static int brightness_set_pmic(enum mt65xx_led_pmic pmic_type, u32 level, u32 di
 			//upmu_top2_bst_drv_ck_pdn(0x1);
 		}
 		return 0;
+		#if 0
+		if (level) 
+		{
+			#ifdef CONTROL_BL_TEMPERATURE
+			mutex_lock(&bl_level_limit_mutex);
+			current_level = level;
+			printk("brightness_set_pmic:current_level=%d\n", current_level);
+			if(0 == limit_flag){
+				last_level = level;
+				printk("brightness_set_pmic:last_level=%d\n", last_level);
+			}else {
+					if(limit < current_level){
+						level = limit;
+						printk("backlight_set_pmic: control level=%d\n", level);
+					}
+			}	
+			mutex_unlock(&bl_level_limit_mutex);
+			#endif
+			
+			level = brightness_mapping(tmp_level);
+			if(level == ERROR_BL_LEVEL)
+				level = tmp_level/17;
+	
+			upmu_boost_isink_hw_sel(0x1);
+			upmu_boost_mode(PMIC_PWM_0);
+			upmu_boost_cabc_en(0);
+
+            if(level >= 0 && level<=23)
+            {
+                    upmu_boost_vrsel(led_bl_level[level].dim);
+                    hwPWMsetting(PMIC_PWM_0,led_bl_level[level].cur,0x15);
+            }
+            else if(level == 999)
+            {
+                    upmu_boost_vrsel(0x1);
+                    hwPWMsetting(PMIC_PWM_0,1,0x15);
+            }
+			
+			upmu_top2_bst_drv_ck_pdn(0x0);
+			upmu_boost_en(0x1);
+			bl_duty = level;	
+		}
+		else 
+		{
+			upmu_boost_en(0x0);
+			bl_duty = level;	
+			//upmu_top2_bst_drv_ck_pdn(0x1);
+		}
+		return 0;
+        #endif
 	}
 	else if (pmic_type == MT65XX_LED_PMIC_BUTTON) 
 	{
 		if (level) 
 		{
-		  #ifdef FIXED_BUTTON_LEDS_BRIGHTNESS
-			hwBacklightKPLEDTuning(FIXED_BUTTON_LEDS_BRIGHTNESS, 0x0);
+			hwBacklightKPLEDTuning(0x9, 0x0);
 			hwBacklightKPLEDTurnOn();
-
-                        tmp_level = 5*(level/42) + 1;	//wuhai 1 ~ 0x1f with 7 steps
-			hwBacklightKPLEDTuning(tmp_level, 0x0);
-			hwBacklightKPLEDTurnOn();
-                 
-		  #else
-                        #ifdef TINNO_PROJECT_S9070
-                              tmp_level = 5*(level/42) + 1;	//wuhai 1 ~ 0x1f with 7 steps
-                        #else
-			      tmp_level = 4*(level/42) + 7;	//Ivan 1 ~ 0x1f with 7 steps
-                        #endif
-
-			      hwBacklightKPLEDTuning(tmp_level, 0x0);
-			      hwBacklightKPLEDTurnOn();
-		  #endif
 		}
 		else 
 		{
@@ -665,20 +726,8 @@ static int brightness_set_pmic(enum mt65xx_led_pmic pmic_type, u32 level, u32 di
 			first_time = false;
 		}
 
-                hwBacklightISINKTuning(0x0, 0x3, 0x0, 0);  //register mode, ch0_step=4ma ,disable CABC
-                hwBacklightISINKTurnOn(0x0);  //turn on ISINK0
-
-		//if(led_init_flag[0] == false)
-		{
-		  #ifdef FIXED_R_LEDS_BRIGHTNESS
-			hwBacklightISINKTuning(MT65XX_LED_PMIC_NLED_ISINK4, PMIC_PWM_1, 0x3, 0);
-			hwPWMsetting(PMIC_PWM_1, FIXED_R_LEDS_BRIGHTNESS, 8);
-		  #else
-			hwBacklightISINKTuning(MT65XX_LED_PMIC_NLED_ISINK4, PMIC_PWM_1, 0x3, 0);
-			hwPWMsetting(PMIC_PWM_1, 31, 8);
-		  #endif
-			led_init_flag[0] = true;
-		}
+		hwBacklightISINKTuning(MT65XX_LED_PMIC_NLED_ISINK4, 0x3, 0x0, 0);
+	
 		
 		if (level) 
 		{
@@ -694,26 +743,14 @@ static int brightness_set_pmic(enum mt65xx_led_pmic pmic_type, u32 level, u32 di
 	}
 	else if(pmic_type == MT65XX_LED_PMIC_NLED_ISINK5)
 	{
-		if(first_time == true)
+	 	if(first_time == true)
 		{
-			hwBacklightISINKTurnOff(MT65XX_LED_PMIC_NLED_ISINK4);  //sw workround for sync leds status
+			hwBacklightISINKTurnOff(MT65XX_LED_PMIC_NLED_ISINK4);  //sw workround for sync leds status 
 			first_time = false;
 		}
-
-                hwBacklightISINKTuning(0x0, 0x3, 0x0, 0);  //register mode, ch0_step=4ma ,disable CABC
-                hwBacklightISINKTurnOn(0x0);  //turn on ISINK0
-
-		//if(led_init_flag[1] == false)
-		{
-		  #ifdef FIXED_G_LEDS_BRIGHTNESS
-			hwBacklightISINKTuning(MT65XX_LED_PMIC_NLED_ISINK5, PMIC_PWM_2, 0x3, 0);
-			hwPWMsetting(PMIC_PWM_2, FIXED_G_LEDS_BRIGHTNESS, 8);
-		  #else
-			hwBacklightISINKTuning(MT65XX_LED_PMIC_NLED_ISINK5, PMIC_PWM_2, 0x3, 0);
-			hwPWMsetting(PMIC_PWM_2, 31, 8);
-		  #endif
-			led_init_flag[1] = true;
-		}
+		
+	     hwBacklightISINKTuning(MT65XX_LED_PMIC_NLED_ISINK5, 0x3, 0x0, 0);
+	
 		if (level) 
 		{
 			upmu_top2_bst_drv_ck_pdn(0x0);
@@ -722,7 +759,21 @@ static int brightness_set_pmic(enum mt65xx_led_pmic pmic_type, u32 level, u32 di
 		else 
 		{
 			hwBacklightISINKTurnOff(MT65XX_LED_PMIC_NLED_ISINK5);
-			//upmu_top2_bst_drv_ck_pdn(0x1);
+		}
+		return 0;
+	}
+	else if(pmic_type == MT65XX_LED_PMIC_NLED_ISINK0)
+	{
+		hwBacklightISINKTuning(MT65XX_LED_PMIC_NLED_ISINK0, 0x3, 0x0, 0);
+		
+		if (level) 
+		{
+			upmu_top2_bst_drv_ck_pdn(0x0);
+			hwBacklightISINKTurnOn(MT65XX_LED_PMIC_NLED_ISINK0);
+		}
+		else 
+		{
+			hwBacklightISINKTurnOff(MT65XX_LED_PMIC_NLED_ISINK0);
 		}
 		return 0;
 	}
@@ -887,7 +938,7 @@ static int  mt65xx_blink_set(struct led_classdev *led_cdev,
 			
 			#if defined (CONFIG_ARCH_MT6575) || defined (CONFIG_ARCH_MT6575T)|| defined (CONFIG_ARCH_MT6577)
 			else if((led_data->cust.mode == MT65XX_LED_MODE_PMIC) && (led_data->cust.data == MT65XX_LED_PMIC_NLED_ISINK4
-				|| led_data->cust.data == MT65XX_LED_PMIC_NLED_ISINK5))
+				|| led_data->cust.data == MT65XX_LED_PMIC_NLED_ISINK5 || led_data->cust.data == MT65XX_LED_PMIC_NLED_ISINK0))
 			{
 				if(get_chip_eco_ver() == CHIP_E2) {
 					nled_tmp_setting.nled_mode = NLED_BLINK;
@@ -917,7 +968,7 @@ static int  mt65xx_blink_set(struct led_classdev *led_cdev,
 			
 			#if defined (CONFIG_ARCH_MT6575) || defined (CONFIG_ARCH_MT6575T)|| defined (CONFIG_ARCH_MT6577)
 			else if((led_data->cust.mode == MT65XX_LED_MODE_PMIC) && (led_data->cust.data == MT65XX_LED_PMIC_NLED_ISINK4
-				|| led_data->cust.data == MT65XX_LED_PMIC_NLED_ISINK5))
+				|| led_data->cust.data == MT65XX_LED_PMIC_NLED_ISINK5 || led_data->cust.data == MT65XX_LED_PMIC_NLED_ISINK0))
 			{
 				if(get_chip_eco_ver() == CHIP_E2) {
 					brightness_set_pmic(led_data->cust.data, 0, 0);

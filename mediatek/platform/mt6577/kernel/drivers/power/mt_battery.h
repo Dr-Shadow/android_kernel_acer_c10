@@ -22,7 +22,7 @@
 #define MAX_CHARGING_TIME                   24*60*60 	// 24hr
 #define MAX_POSTFULL_SAFETY_TIME       		1*30*60 	// 30mins
 #define MAX_PreCC_CHARGING_TIME         	1*30*60  	// 0.5hr
-#define MAX_CV_CHARGING_TIME              	3*60*60 	// 3hr
+#define MAX_CV_CHARGING_TIME              	2*60*60 	//green modify, 20121026, change 3hr to 2hr
 //#define MAX_CV_CHARGING_TIME              	24*60*60 	// 24hr
 #define MUTEX_TIMEOUT                       5000
 #define BAT_TASK_PERIOD                     10 			// 10sec

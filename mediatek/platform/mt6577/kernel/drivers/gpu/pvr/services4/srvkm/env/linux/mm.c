@@ -108,7 +108,9 @@ typedef struct _DEBUG_MEM_ALLOC_REC
 	pid_t					pid;
     IMG_CHAR                *pszFileName;
     IMG_UINT32              ui32Line;
-    
+#if defined(MTK_DEBUG)
+    IMG_CHAR                acDebugMsg[MTK_DEBUG_MSG_LENGTH];
+#endif
     struct _DEBUG_MEM_ALLOC_REC   *psNext;
 	struct _DEBUG_MEM_ALLOC_REC   **ppsThis;
 } DEBUG_MEM_ALLOC_REC;
@@ -293,6 +295,13 @@ DebugMemAllocRecordAdd(DEBUG_MEM_ALLOC_TYPE eAllocType,
 {
     DEBUG_MEM_ALLOC_REC *psRecord;
 
+#ifdef MTK_DEBUG
+    if (!MTKDebugIsEnable3DMemInfo())
+    {
+        return;
+    }
+#endif
+
     LinuxLockMutex(&g_sDebugMutex);
 
     psRecord = kmalloc(sizeof(DEBUG_MEM_ALLOC_REC), GFP_KERNEL);
@@ -306,6 +315,9 @@ DebugMemAllocRecordAdd(DEBUG_MEM_ALLOC_TYPE eAllocType,
     psRecord->ui32Bytes = ui32Bytes;
     psRecord->pszFileName = pszFileName;
     psRecord->ui32Line = ui32Line;
+#if defined(MTK_DEBUG)
+    MTKDebugGetInfo(psRecord->acDebugMsg, sizeof(psRecord->acDebugMsg));
+#endif
     
 	List_DEBUG_MEM_ALLOC_REC_Insert(&g_MemoryRecords, psRecord);
     
@@ -386,6 +398,13 @@ static IMG_BOOL DebugMemAllocRecordRemove_AnyVaCb(DEBUG_MEM_ALLOC_REC *psCurrent
 static IMG_VOID
 DebugMemAllocRecordRemove(DEBUG_MEM_ALLOC_TYPE eAllocType, IMG_VOID *pvKey, IMG_CHAR *pszFileName, IMG_UINT32 ui32Line)
 {
+#ifdef MTK_DEBUG
+    if (!MTKDebugIsEnable3DMemInfo())
+    {
+        return;
+    }
+#endif
+
     LinuxLockMutex(&g_sDebugMutex);
 
     
@@ -1669,7 +1688,10 @@ NewSubLinuxMemArea(LinuxMemArea *psParentLinuxMemArea,
     {
         DEBUG_LINUX_MEM_AREA_REC *psParentRecord;
         psParentRecord = DebugLinuxMemAreaRecordFind(psParentLinuxMemArea);
-        DebugLinuxMemAreaRecordAdd(psLinuxMemArea, psParentRecord->ui32Flags);
+        if (psParentRecord)
+        {
+             DebugLinuxMemAreaRecordAdd(psLinuxMemArea, psParentRecord->ui32Flags);
+        }
     }
 #endif
     
@@ -1757,6 +1779,13 @@ DebugLinuxMemAreaRecordAdd(LinuxMemArea *psLinuxMemArea, IMG_UINT32 ui32Flags)
     DEBUG_LINUX_MEM_AREA_REC *psNewRecord;
     const IMG_CHAR *pi8FlagsString;
     
+#ifdef MTK_DEBUG
+    if (!MTKDebugIsEnable3DMemInfo())
+    {
+        return;
+    }
+#endif
+
     LinuxLockMutex(&g_sDebugMutex);
 
     if (psLinuxMemArea->eAreaType != LINUX_MEM_AREA_SUB_ALLOC)
@@ -1826,6 +1855,13 @@ DebugLinuxMemAreaRecordFind(LinuxMemArea *psLinuxMemArea)
 {
     DEBUG_LINUX_MEM_AREA_REC *psCurrentRecord;
 
+#ifdef MTK_DEBUG
+    if (!MTKDebugIsEnable3DMemInfo())
+    {
+        return NULL;
+    }
+#endif
+
     LinuxLockMutex(&g_sDebugMutex);
 	psCurrentRecord = List_DEBUG_LINUX_MEM_AREA_REC_Any_va(g_LinuxMemAreaRecords,
 														MatchLinuxMemArea_AnyVaCb,
@@ -1841,6 +1877,13 @@ static IMG_VOID
 DebugLinuxMemAreaRecordRemove(LinuxMemArea *psLinuxMemArea)
 {
     DEBUG_LINUX_MEM_AREA_REC *psCurrentRecord;
+
+#ifdef MTK_DEBUG
+    if (!MTKDebugIsEnable3DMemInfo())
+    {
+        return;
+    }
+#endif
 
     LinuxLockMutex(&g_sDebugMutex);
 
@@ -2399,7 +2442,11 @@ static void ProcSeqShowMemoryRecords(struct seq_file *sfile,void* el)
                            psRecord->ui32Bytes,
                            psRecord->pid,
                            "NULL",
+#if defined(MTK_DEBUG)
+                           strrchr(psRecord->pszFileName, '/'),
+#else
                            psRecord->pszFileName,
+#endif
                            psRecord->ui32Line);
     }
     else
@@ -2425,9 +2472,25 @@ static void ProcSeqShowMemoryRecords(struct seq_file *sfile,void* el)
                            psRecord->ui32Bytes,
                            psRecord->pid,
                            KMemCacheNameWrapper(psRecord->pvPrivateData),
+#if defined(MTK_DEBUG)
+                           strrchr(psRecord->pszFileName, '/'),
+#else
                            psRecord->pszFileName,
+#endif
                            psRecord->ui32Line);
     }
+
+#if defined(MTK_DEBUG)
+    seq_printf(sfile,
+    #if !defined(DEBUG_LINUX_XML_PROC_FILES)
+                    "%s\n",
+    #else
+                    "<user_space_info>\n"
+                    "\t<msg>%s</msg>\n"
+                    "</user_space_info>\n",
+    #endif
+                    psRecord->acDebugMsg);
+#endif
 }
 
 #endif 

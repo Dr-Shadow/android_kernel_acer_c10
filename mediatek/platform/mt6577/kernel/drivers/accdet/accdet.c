@@ -765,6 +765,33 @@ static int multi_key_detection(void)
 }
 
 #endif
+
+static bool send_music_key_event(void)
+{
+	int hook_button_for_music_key_current_status = 0;
+	while(1)
+	{ 
+		/*read the current status of hook button from the accdet logic, 0 is pressed, other is released or headset plug out*/
+		hook_button_for_music_key_current_status = INREG32(ACCDET_MEMORIZED_IN) & 0x3;
+		if(hook_button_for_music_key_current_status == 0)
+		{
+			input_report_key(kpd_accdet_dev, MSUIC_KEY, 1);
+			input_sync(kpd_accdet_dev);
+			ACCDET_DEBUG("[accdet]send music key event 164 down\n");
+		}
+		else
+		{
+			input_report_key(kpd_accdet_dev, MSUIC_KEY, 0);
+        		input_sync(kpd_accdet_dev);
+			ACCDET_DEBUG("[accdet] Send music key event 164 up\n");
+			return true;
+		}			
+		msleep(100);
+	}
+	ACCDET_DEBUG("[accdet] send_music_key_event Error!\n");
+	return false;
+}
+
 //clear ACCDET IRQ in accdet register
 static inline void clear_accdet_interrupt(void)
 {
@@ -1059,8 +1086,14 @@ static inline void check_cable_type(void)
 		accdet_status = HOOK_SWITCH;
 		button_status = 1;
 		#endif
-
-             if(button_status)
+		
+		if((call_status == 0) && button_status)
+		{	
+			ACCDET_DEBUG("[accdet] Start send_music_key_event!\n");
+			send_music_key_event();
+		}
+		
+		if(button_status)
 		{	
 		#ifdef SW_WORK_AROUND_ACCDET_REMOTE_BUTTON_ISSUE
 #ifdef ACCDET_MULTI_KEY_FEATURE
@@ -1976,7 +2009,8 @@ static int accdet_probe(struct platform_device *dev)
         __set_bit(KEY_STOPCD, kpd_accdet_dev->keybit);
 	__set_bit(KEY_VOLUMEDOWN, kpd_accdet_dev->keybit);
       __set_bit(KEY_VOLUMEUP, kpd_accdet_dev->keybit);
-    
+    __set_bit(MSUIC_KEY, kpd_accdet_dev->keybit);
+	
 	kpd_accdet_dev->id.bustype = BUS_HOST;
 	kpd_accdet_dev->name = "ACCDET";
 	if(input_register_device(kpd_accdet_dev))

@@ -573,37 +573,6 @@ BOOL DISP_DetectDevice(void)
 	return TRUE;
 }
 
-//called by func tinno_lcd_info_show in mtkfb.c edit by Magnum 2012-7-10
-void GetLcdInfo(char * buf)
-{
-	if(isLCMFound )
-		sprintf(buf, "%s",lcm_drv->name);			
-	else
-		sprintf(buf, "%s","unknow lcd");
-}
-
-void GetDebugInfo(char * buf)
-{
-       printk("GetDebugInfo...buf %s",buf);
-//	ASSERT(buf!=NULL);
-	if(buf == NULL)
-		return;
-	if (!lcm_drv->m_debug) {
-		printk("[Magnum] lcm driver don't achieve m_debug func \n");
-		return;
-	}
-	if (down_interruptible(&sem_update_screen)) {
-		printk("ERROR: Can't get sem_update_screen in DISP_PowerEnable()\n");
-		return DISP_STATUS_ERROR;
-	}
-	//char ce_temp = buf[0];
-	lcm_drv->m_debug(buf);
-	LCD_CHECK_RET(LCD_WaitForNotBusy());
-	msleep(20);
-	up(&sem_update_screen);
-}
-
-
 // ---------------------------------------------------------------------------
 //  DISP Driver Implementations
 // ---------------------------------------------------------------------------
@@ -1295,36 +1264,6 @@ UINT32 DISP_GetScreenHeight(void)
 		return 0;
 	}
 }
-UINT32 DISP_GetActiveHeight(void)
-{
-    disp_drv_init_context();
-	if(lcm_params)
-	{
-	    printk("[wwy]lcm_parms->active_height = %d\n",lcm_params->active_height);
-    	return lcm_params->active_height;
-	}
-	else
-	{
-		printk("WARNING!! get active_height before display driver inited!\n");
-		return 0;
-	}
-}
-
-UINT32 DISP_GetActiveWidth(void)
-{
-    disp_drv_init_context();
-	if(lcm_params)
-	{
-	    printk("[wwy]lcm_parms->active_width = %d\n",lcm_params->active_width);
-    	return lcm_params->active_width;
-	}
-	else
-	{
-		printk("WARNING!! get active_width before display driver inited!\n");
-		return 0;
-	}
-}
-
 DISP_STATUS DISP_SetScreenBpp(UINT32 bpp)
 {
     ASSERT(bpp != 0);

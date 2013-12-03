@@ -82,13 +82,13 @@ static int vibr_Enable(void)
 {
 	if(!ldo_state) {
 		printk("[vibrator]vibr_Enable \n");
-		
-		if(hwPowerOn(MT65XX_POWER_LDO_VIBR, VOL_2500, "VIBR")) {
+		/*
+		if(hwPowerOn(MT65XX_POWER_LDO_VIBR, VOL_2800, "VIBR")) {
 			ldo_state=1;
 		}
-		
+		*/
 		dct_pmic_VIBR_enable(1);
-		//ldo_state=1;
+		ldo_state=1;
 	}
 	return 0;
 }
@@ -97,13 +97,13 @@ static int vibr_Disable(void)
 {
 	if(ldo_state) {
 		printk("[vibrator]vibr_Disable \n");
-		
+		/*
 		if(hwPowerDown(MT65XX_POWER_LDO_VIBR, "VIBR")) {
 			ldo_state=0;
 		}
-		
+		*/
 		dct_pmic_VIBR_enable(0);
-		//ldo_state=0;
+		ldo_state=0;
 	}
    	return 0;
 }

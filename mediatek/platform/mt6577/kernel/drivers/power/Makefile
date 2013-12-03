@@ -6,10 +6,6 @@ else
     ifeq ($(MTK_FAN5405_SUPPORT),yes)
         obj-$(CONFIG_MTK_SMART_BATTERY) += mt_battery_fan5405.o mt_fuel_gauge.o fan5405.o
     else
-        ifeq ($(MTK_BQ24158_SUPPORT),yes)
-              obj-$(CONFIG_MTK_SMART_BATTERY) += mt_battery_bq24158.o mt_fuel_gauge.o bq24158.o
-        else
-              obj-$(CONFIG_MTK_SMART_BATTERY) += mt_battery.o mt_fuel_gauge.o
-        endif
+        obj-$(CONFIG_MTK_SMART_BATTERY) += mt_battery.o mt_fuel_gauge.o
     endif
 endif

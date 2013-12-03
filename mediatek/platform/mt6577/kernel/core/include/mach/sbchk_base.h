@@ -101,14 +101,10 @@
 #define SBCHK_BASE_HASH_INIT_FAIL           (0x1002)
 #define SBCHK_BASE_HASH_DATA_FAIL           (0x1003)
 #define SBCHK_BASE_HASH_CHECK_FAIL          (0x1004)
-#define SBCHK_BASE_INDEX_OUT_OF_RANGE       (0xFFFFFFFF)
-
 
 /**************************************************************************
  *  EXTERNAL FUNCTION
  **************************************************************************/
 extern void sbchk_base(void);
-
-
 
 #endif   /*_SBCHK_BASE*/

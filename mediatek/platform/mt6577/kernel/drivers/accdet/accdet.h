@@ -55,7 +55,7 @@ IOCTL
 
 #define KEY_CALL	KEY_SEND
 #define KEY_ENDCALL	KEY_HANGEUL
-
+#define MSUIC_KEY	KEY_PLAYPAUSE
 
 enum accdet_report_state
 {

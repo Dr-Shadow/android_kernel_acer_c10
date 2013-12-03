@@ -1472,9 +1472,9 @@ static int pmic_thread_kthread(void *x)
         if(!upmu_get_PCHR_CHRDET() && is_first)
         {
             #if defined(CONFIG_MTK_LEDS)
-            mt65xx_leds_brightness_set(MT65XX_LED_TYPE_RED, LED_OFF);
-            mt65xx_leds_brightness_set(MT65XX_LED_TYPE_GREEN, LED_OFF);
-            mt65xx_leds_brightness_set(MT65XX_LED_TYPE_BLUE, LED_OFF);
+            //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_RED, LED_OFF);
+            //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_GREEN, LED_OFF);
+            //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_BLUE, LED_OFF);
             #endif
             is_first = false;
             xlog_printk(ANDROID_LOG_INFO, "Power/PMIC", "[pmic_thread_kthread] Power Off Nled First Time \r\n");
@@ -1489,20 +1489,20 @@ static int pmic_thread_kthread(void *x)
                 if(led_switch)
                 {
                     xlog_printk(ANDROID_LOG_INFO, "Power/PMIC", "[pmic_thread_kthread] Power On NLed Battery Level = %d\r\n", bat_volt_check_point);
-                    if(bat_volt_check_point >= 100)    //Full ARGB	//Ivan
+                    if(bat_volt_check_point >= 90)    //Full ARGB
                     {
             #if defined(CONFIG_MTK_LEDS)
-                        mt65xx_leds_brightness_set(MT65XX_LED_TYPE_RED, LED_OFF);
-                        mt65xx_leds_brightness_set(MT65XX_LED_TYPE_GREEN, LED_FULL);
-                        mt65xx_leds_brightness_set(MT65XX_LED_TYPE_BLUE, LED_OFF);
+                        //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_RED, LED_OFF);
+                        //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_GREEN, LED_OFF);
+                        //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_BLUE, LED_OFF);
                       #endif
                     }
                     else  //Low and Medium ARGB
                     {
                         #if defined(CONFIG_MTK_LEDS)
-                        mt65xx_leds_brightness_set(MT65XX_LED_TYPE_RED, LED_FULL);
-                        mt65xx_leds_brightness_set(MT65XX_LED_TYPE_GREEN, LED_OFF);
-                        mt65xx_leds_brightness_set(MT65XX_LED_TYPE_BLUE, LED_OFF);
+                        //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_RED, LED_OFF);
+                        //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_GREEN, LED_OFF);
+                        //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_BLUE, LED_OFF);
                       #endif
                     }
                 }
@@ -1518,9 +1518,9 @@ static int pmic_thread_kthread(void *x)
                 {
                     xlog_printk(ANDROID_LOG_INFO, "Power/PMIC", "[pmic_thread_kthread] Power Off NLed\r\n");
                     #if defined(CONFIG_MTK_LEDS)
-                    mt65xx_leds_brightness_set(MT65XX_LED_TYPE_RED, LED_OFF);
-                    mt65xx_leds_brightness_set(MT65XX_LED_TYPE_GREEN, LED_OFF);
-                    mt65xx_leds_brightness_set(MT65XX_LED_TYPE_BLUE, LED_OFF);
+                    //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_RED, LED_OFF);
+                    //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_GREEN, LED_OFF);
+                    //mt65xx_leds_brightness_set(MT65XX_LED_TYPE_BLUE, LED_OFF);
                   #endif
                 }
                 xlog_printk(ANDROID_LOG_INFO, "Power/PMIC", "[pmic_thread_kthread] charger NOT exist!\r\n");

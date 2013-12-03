@@ -1333,9 +1333,9 @@ return 0;
     }
 
     p += sprintf(p, "\n=========================================\n");
-#if defined(CONFIG_MTK_WCN_CMB_SDIO_SLOT)
+
     p += sprintf(p, "WCN SDIO SLOT is at msdc<%d>\n",CONFIG_MTK_WCN_CMB_SDIO_SLOT); 
-#endif	
+	
 	p += sprintf(p, "-----------------------------------------\n"); 
 	p += sprintf(p, "clk settings \n"); 
 if (clk_setting)
@@ -1478,11 +1478,9 @@ static int mtk_sdio_proc_write(struct file *file, const char *buf, unsigned long
 			printk("[****SD_Debug****]SDIO_AUTOTEST_CD\n");
 			if(p1 == 1 && p2 == 1) {
 				sdio_cd_result = 1;
-#if defined(CONFIG_MTK_WCN_CMB_SDIO_SLOT)
 				board_sdio_ctrl(1,0);
 				msleep(1500);
 				board_sdio_ctrl(1,1);
-# endif
 				msleep(3000);
 				printk(KERN_INFO"msdc SDIO CardDetection is %s\n",(sdio_cd_result)?"fail":"pass");
 			}		

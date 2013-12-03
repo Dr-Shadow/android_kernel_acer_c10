@@ -186,11 +186,11 @@ IMG_VOID PVRSRVReleasePrintf(const IMG_CHAR *pszFormat, ...)
 
 	if (VBAppend(pszBuf, ui32BufSiz, pszFormat, vaArgs))
 	{
-		printk(KERN_INFO "PVR_K:(Message Truncated): %s\n", pszBuf);
+		printk(KERN_ERR "PVR_K:(Message Truncated): %s\n", pszBuf);
 	}
 	else
 	{
-		printk(KERN_INFO "%s\n", pszBuf);
+		printk(KERN_ERR "%s\n", pszBuf);
 	}
 
 	ReleaseBufferLock(ulLockFlags);
@@ -227,11 +227,11 @@ IMG_VOID PVRSRVTrace(const IMG_CHAR* pszFormat, ...)
 
 	if (VBAppend(pszBuf, ui32BufSiz, pszFormat, VArgs))
 	{
-		printk(KERN_INFO "PVR_K:(Message Truncated): %s\n", pszBuf);
+		printk(KERN_ERR "PVR_K:(Message Truncated): %s\n", pszBuf);
 	}
 	else
 	{
-		printk(KERN_INFO "%s\n", pszBuf);
+		printk(KERN_ERR "%s\n", pszBuf);
 	}
 
 	ReleaseBufferLock(ulLockFlags);
@@ -329,7 +329,7 @@ IMG_VOID PVRSRVDebugPrintf	(
 
 		if (VBAppend(pszBuf, ui32BufSiz, pszFormat, vaArgs))
 		{
-			printk(KERN_INFO "PVR_K:(Message Truncated): %s\n", pszBuf);
+			printk(KERN_ERR "PVR_K:(Message Truncated): %s\n", pszBuf);
 		}
 		else
 		{
@@ -402,16 +402,16 @@ IMG_VOID PVRSRVDebugPrintf	(
 
 				if (BAppend(pszBuf, ui32BufSiz, " [%u, %s]", ui32Line, pszFileName))
 				{
-					printk(KERN_INFO "PVR_K:(Message Truncated): %s\n", pszBuf);
+					printk(KERN_ERR "PVR_K:(Message Truncated): %s\n", pszBuf);
 				}
 				else
 				{
-					printk(KERN_INFO "%s\n", pszBuf);
+					printk(KERN_ERR "%s\n", pszBuf);
 				}
 			}
 			else
 			{
-				printk(KERN_INFO "%s\n", pszBuf);
+				printk(KERN_ERR "%s\n", pszBuf);
 			}
 		}
 

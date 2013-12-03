@@ -67,7 +67,8 @@ static mtkstp_context_struct stp_core_ctx = {0};
 #define STP_FW_ASSERT_FLAG(x)  ((x).f_fw_assert)
 #define STP_SET_FW_ASSERT(x,v)  ((x).f_fw_assert = (v))
 
-
+#define STP_WMT_LAST_CLOSE(x)       ((x).f_wmt_last_close) 
+#define STP_SET_WMT_LAST_CLOSE(x,v) ((x).f_wmt_last_close = (v))
 
 /*[PatchNeed]Need to calulate the timeout value*/
 static UINT32 mtkstp_tx_timeout = MTKSTP_TX_TIMEOUT;
@@ -1173,6 +1174,7 @@ INT32 mtk_wcn_stp_init(const mtkstp_callback * const cb_func)
     STP_SET_READY(stp_core_ctx, 0);
     STP_SET_SUPPORT_PROTOCOL(stp_core_ctx, 0);
     STP_SET_PSM_CORE(stp_core_ctx, stp_psm_init());
+    STP_SET_WMT_LAST_CLOSE(stp_core_ctx,0);
     if(!STP_PSM_CORE(stp_core_ctx))
     {
         ret = (-3);
@@ -2360,6 +2362,16 @@ INT32 mtk_wcn_stp_assert_flag(VOID)
 }
 
 
+INT32 mtk_wcn_stp_set_wmt_last_close(UINT32 value)
+{
+    STP_INFO_FUNC("set wmt_last_close flag (%d)\n", value);
+
+    STP_SET_WMT_LAST_CLOSE(stp_core_ctx, value);
+
+    return 0;
+}
+
+
 /*****************************************************************************
 * FUNCTION
 *  mtk_wcn_stp_send_data
@@ -2382,6 +2394,11 @@ INT32 mtk_wcn_stp_send_data(const UINT8 *buffer, const UINT32 length, const UINT
 
     //osal_buffer_dump(buffer,"tx", length, 32);
 
+	if(0 != STP_WMT_LAST_CLOSE(stp_core_ctx))
+	{
+		STP_ERR_FUNC("WMT lats close,shoud not have tx request!\n");
+		return length;
+	}
     //if(g_block_tx)
     if (0 != STP_FW_ASSERT_FLAG(stp_core_ctx))
     {
@@ -2421,7 +2438,7 @@ INT32 mtk_wcn_stp_send_data(const UINT8 *buffer, const UINT32 length, const UINT
 DONT_MONITOR:  
 #else
 #ifdef CONFIG_POWER_SAVING_SUPPORT
-     if(stp_is_apply_powersaving())
+     //if(stp_is_apply_powersaving())
      {
         if(stp_is_privileges_cmd(buffer, length , type))
         {
@@ -2626,7 +2643,7 @@ DONT_MONITOR:
         }    
     }
 #else
-    if(stp_is_apply_powersaving()) 
+    //if(stp_is_apply_powersaving()) 
     {
     	if((MTK_WCN_BOOL_FALSE == stp_is_privileges_cmd(buffer, length , type)))
     	{
@@ -2656,7 +2673,13 @@ INT32 mtk_wcn_stp_send_data_raw (const UINT8 *buffer, const UINT32 length, const
 {
     UINT32 written = 0;
     INT32 ret = 0;
-
+	  
+	if(0 != STP_WMT_LAST_CLOSE(stp_core_ctx))
+	{
+		STP_ERR_FUNC("WMT lats close,shoud not have tx request!");
+		return length;
+	}
+    
     STP_DBG_FUNC("mtk_wcn_stp_send_data_raw, type = %d, data = %x %x %x %x %x %x ", type, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5]);
     STP_SET_PENDING_TYPE(stp_core_ctx, type); // remember tx type, forward following rx to this type
 

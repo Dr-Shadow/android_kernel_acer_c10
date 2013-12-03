@@ -103,6 +103,8 @@ extern int bat_volt_check_point;
 extern int gForceADCsolution;
 extern kal_bool batteryBufferFirst;
 
+//extern unsigned int UbVbat;  //[**add by Rachel,2012.11.13,add mtk patch**]
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 //// Define
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1614,7 +1616,8 @@ kal_int32 fgauge_read_capacity(kal_int32 type)
     {
         // Use voltage to calculate capacity
         voltage = fgauge_read_voltage(); // in unit of mV
-        temperature = fgauge_read_temperature();                        
+        //voltage = UbVbat;  //[**add by Rachel,2012.11.13,add mtk patch**]
+        temperature = fgauge_read_temperature();
         //dvalue = fgauge_get_dod0(voltage, temperature, KAL_TRUE); // need not compensate
         dvalue = fgauge_get_dod0(voltage, temperature, KAL_FALSE); // need compensate vbat
     }
@@ -1881,6 +1884,9 @@ void fgauge_Normal_Mode_Work(void)
     gFG_current = fgauge_read_current();
     gFG_columb = fgauge_read_columb();        
 
+    //gFG_voltage=UbVbat;  //[**add by Rachel,2012.11.13,add mtk patch**]
+
+    
 //1.1 Average FG_voltage
     /**************** Averaging : START ****************/
     if(gFG_booting_counter_I_FLAG != 0)

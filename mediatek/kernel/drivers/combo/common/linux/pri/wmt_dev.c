@@ -1515,6 +1515,20 @@ WMT_unlocked_ioctl (
 			}
 		}
 		break;
+		case 13:
+		{
+			if (1 == arg)
+			{
+				  WMT_INFO_FUNC("launcher may be killed,block abnormal stp tx. \n");
+          wmt_lib_set_stp_wmt_last_close(1);
+			}
+			else
+			{
+				  wmt_lib_set_stp_wmt_last_close(0);
+			}
+
+		}
+		break;
     default:
         iRet = -EINVAL;
         WMT_WARN_FUNC("unknown cmd (%d)\n", cmd);

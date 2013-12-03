@@ -215,7 +215,6 @@ typedef struct {
 
 #define VIDEO_BUFIDX_INC(x) x = (x == (VIDEO_BUFFER_CNT-1) ? 0 : x+1)
 
-#define DISP_TVBufHeight    (DISP_GetScreenHeight()/4*4)
 static unsigned int _GetTime(void)
 {
 	struct timeval time;
@@ -250,7 +249,7 @@ UINT32 tvout_get_vram_size(void)
 {
 	UINT32 vramsize;
 	vramsize = DISP_GetScreenWidth() *
-			  DISP_TVBufHeight/*DISP_GetScreenHeight()*/ *
+			   DISP_GetScreenHeight() *
 			   TVOUT_BUFFER_BPP * TVOUT_BUFFERS;
 #if !defined(MTK_TVOUT_ENABLE_M4U)
 	vramsize = ALIGN_TO_POW_OF_2(vramsize, 0x100000);
@@ -503,7 +502,7 @@ TVOUT_STATUS tvbuf_Init(void)
 
 
     tmpFbPitchInBytes = DISP_GetScreenWidth() * TVOUT_BUFFER_BPP;
-    tmpFbSizeInBytes = tmpFbPitchInBytes * DISP_TVBufHeight/*DISP_GetScreenHeight()*/;
+    tmpFbSizeInBytes = tmpFbPitchInBytes * DISP_GetScreenHeight();
 
     _buf_va = (UINT32)tmpBufVAForM4U;
 
@@ -1187,7 +1186,7 @@ static TVOUT_STATUS Config_TVR(TVOUT_ROT rot, BOOL lockScreenUpdateMutex)
 
         param.rotation = (TVR_ROT)tvout_context.orientation;
         param.flip = FALSE;
-        param.dstBufOffset = _cal_tvr_buf_offset(tvout_context.orientation, param.srcWidth, DISP_TVBufHeight/*param.srcHeight*/);
+        param.dstBufOffset = _cal_tvr_buf_offset(tvout_context.orientation, param.srcWidth, param.srcHeight);
         tvr_buf_offset = param.dstBufOffset;
         TV_INFO("%d", tvr_buf_offset);
 
@@ -1238,7 +1237,7 @@ static TVOUT_STATUS Config_TVR(TVOUT_ROT rot, BOOL lockScreenUpdateMutex)
     {
     case TVOUT_ROT_90  :
     case TVOUT_ROT_270 :
-        tvout_context.targetWidth = DISP_TVBufHeight/*DISP_GetScreenHeight()*/;
+        tvout_context.targetWidth = DISP_GetScreenHeight();
         tvout_context.targetHeight = DISP_GetScreenWidth();
         break;
 
@@ -1246,7 +1245,7 @@ static TVOUT_STATUS Config_TVR(TVOUT_ROT rot, BOOL lockScreenUpdateMutex)
     case TVOUT_ROT_180 :
     default :
         tvout_context.targetWidth = DISP_GetScreenWidth();
-        tvout_context.targetHeight = DISP_TVBufHeight/*DISP_GetScreenHeight()*/;
+        tvout_context.targetHeight = DISP_GetScreenHeight();
         break;
     }
 

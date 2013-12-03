@@ -166,14 +166,6 @@ static DECLARE_WORK(pwrkey_pmic_work, kpd_pwrkey_handler);
 static void kpd_keymap_handler(unsigned long data);
 static DECLARE_TASKLET(kpd_keymap_tasklet, kpd_keymap_handler, 0);
 
-//edit by Magnum 2012-8-25
-bool power_pressed = false;
-#ifdef CTP_SIMULATE_PS
-extern void msg2133_tpd_eint_interrupt_handler(void);
-extern void cctpd_eint_interrupt_handler(void);
-extern char ps_mode;
-#endif 
-
 static u16 kpd_keymap[KPD_NUM_KEYS] = KPD_INIT_KEYMAP();
 static u16 kpd_keymap_state[KPD_NUM_MEMS] = {
 	0xffff, 0xffff, 0xffff, 0xffff, 0x00ff
@@ -460,17 +452,6 @@ static void kpd_pwrkey_handler(struct work_struct *work)
 void kpd_pwrkey_pmic_handler(unsigned long pressed)
 {
 	printk(KPD_SAY "Power Key generate, pressed=%ld\n", pressed);
-	#ifdef CTP_SIMULATE_PS 
-	if(pressed && ps_mode == 1)   //edit by Magnum
-	{
-		power_pressed = true;
-		msg2133_tpd_eint_interrupt_handler();
-		//power_pressed = false;
-	}
-    else
-		power_pressed = false;
-	#endif
-	
 	if(!kpd_input_dev) {
 		printk("KPD input device not ready\n");
 		return;

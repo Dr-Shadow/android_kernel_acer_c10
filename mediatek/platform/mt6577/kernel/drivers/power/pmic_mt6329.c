@@ -1530,7 +1530,7 @@ void dct_pmic_VIBR_sel(kal_uint32 volt)
     xlog_printk(ANDROID_LOG_DEBUG, "Power/PMIC", "****[dct_pmic_VIBR_sel] value=%d \n", volt);
 
     if(volt == VOL_DEFAULT)    {
-        upmu_ldo_vosel(LDO_VIBR, UPMU_VOLT_2_5_0_0_V);//UPMU_VOLT_3_3_0_0_V);
+        upmu_ldo_vosel(LDO_VIBR, UPMU_VOLT_3_3_0_0_V);
     }
     else if(volt == UPMU_VOLT_1_3_0_0_V){        
         upmu_ldo_vosel(LDO_VIBR, UPMU_VOLT_1_3_0_0_V);

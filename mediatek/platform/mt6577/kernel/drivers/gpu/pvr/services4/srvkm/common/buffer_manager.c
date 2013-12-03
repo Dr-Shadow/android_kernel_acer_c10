@@ -32,6 +32,9 @@
 #include "pdump_km.h"
 #include "lists.h"
 
+#include "buffer_manager.h"
+#include "mtk_debug.h"
+
 static IMG_BOOL
 ZeroBuf(BM_BUF *pBuf, BM_MAPPING *pMapping, IMG_SIZE_T ui32Bytes, IMG_UINT32 ui32Flags);
 static IMG_VOID
@@ -177,12 +180,6 @@ AllocMemory (BM_CONTEXT			*pBMContext,
 
 			
 			pBuf->DevVAddr = *psDevVAddr;
-#if 1//mtk02183
-			if (pBuf->DevVAddr.uiAddr == 0xf12c000)
-			{
-				PVR_DPF((PVR_DBG_ERROR, "%s: MMU Alloc DevVA=0xf12c000", __func__));
-			}
-#endif
 		}
 		else
 		{
@@ -202,12 +199,6 @@ AllocMemory (BM_CONTEXT			*pBMContext,
 				PVR_DPF((PVR_DBG_ERROR, "AllocMemory: MMUAlloc failed"));
 				return IMG_FALSE;
 			}
-#if 1//mtk02183
-			if (pBuf->DevVAddr.uiAddr == 0xf12c000)
-			{
-				PVR_DPF((PVR_DBG_ERROR, "%s: MMU Alloc DevVA=0xf12c000", __func__));
-			}
-#endif
 		}
 
 		
@@ -1650,13 +1641,6 @@ DevMemoryAlloc (BM_CONTEXT *pBMContext,
 		return IMG_FALSE;
 	}
 
-#if 1//mtk02183
-	if (pMapping->DevVAddr.uiAddr == 0xf12c000)
-	{
-		PVR_DPF((PVR_DBG_ERROR, "%s: MMU Alloc DevVA=0xf12c000", __func__));
-	}
-#endif
-
 #ifdef SUPPORT_SGX_MMU_BYPASS
 	EnableHostAccess(pBMContext->psMMUContext);
 #endif
@@ -1729,6 +1713,12 @@ DevMemoryAlloc (BM_CONTEXT *pBMContext,
 	DisableHostAccess(pBMContext->psMMUContext);
 #endif
 
+	MTKPP_LOG(MTK_PP_R_DEVMEM, "pid=%u dev=%p size=%u alloc",
+		OSGetCurrentProcessIDKM(),
+		(void *) pMapping->DevVAddr.uiAddr, 
+		pMapping->uSize
+		);
+
 	return IMG_TRUE;
 }
 
@@ -1766,15 +1756,13 @@ DevMemoryFree (BM_MAPPING *pMapping)
 	                    (pMapping->ui32Flags & PVRSRV_MEM_INTERLEAVED) ? IMG_TRUE : IMG_FALSE);
 #endif
 	}
-
-#if 1//mtk02183
-	if (pMapping->DevVAddr.uiAddr == 0xf12c000)
-	{
-		PVR_DPF((PVR_DBG_ERROR, "%s: MMU Free DevVA=0xf12c000", __func__));
-	}
-#endif
-
 	psDeviceNode->pfnMMUFree (pMapping->pBMHeap->pMMUHeap, pMapping->DevVAddr, IMG_CAST_TO_DEVVADDR_UINT(pMapping->uSize));
+
+	MTKPP_LOG(MTK_PP_R_DEVMEM, "pid=%u dev=%p size=%u free",
+		OSGetCurrentProcessIDKM(),
+		(void *) pMapping->DevVAddr.uiAddr, 
+		pMapping->uSize
+		);
 }
 
 #ifndef XPROC_WORKAROUND_NUM_SHAREABLES

@@ -661,6 +661,10 @@ static int __init PVRCore_Init(void)
 		return error;
 	}
 
+#if defined(MTK_DEBUG)
+		MTKDebugInit();
+#endif
+
 	if (PVROSFuncInit() != PVRSRV_OK)
 	{
 		error = -ENOMEM;
@@ -882,6 +886,10 @@ static void __exit PVRCore_Cleanup(void)
 	LinuxBridgeDeInit();
 
 	PVROSFuncDeInit();
+
+#if defined(MTK_DEBUG)
+	MTKDebugDeinit();
+#endif
 
 	RemoveProcEntries();
 

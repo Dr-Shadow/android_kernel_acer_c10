@@ -1189,7 +1189,7 @@ static inline INT32 _stp_psm_notify_wmt(MTKSTP_PSM_T *stp_psm, const MTKSTP_PSM_
             
             if(action == SLEEP)
             {
-                _stp_psm_set_state(stp_psm, ACT_INACT);
+                //_stp_psm_set_state(stp_psm, ACT_INACT);
 
                 _stp_psm_release_data(stp_psm);
 

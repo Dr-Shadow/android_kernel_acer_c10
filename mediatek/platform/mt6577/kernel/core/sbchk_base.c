@@ -34,16 +34,6 @@
  **************************************************************************/
 bool                                bIsChecked = FALSE;
 
-#define DEVINFO_DATA_SIZE    21
-u32 g_devinfo_data[DEVINFO_DATA_SIZE];
-u32 g_devinfo_data_size = DEVINFO_DATA_SIZE;
-u32 get_devinfo_with_index(u32 index);
-
-EXPORT_SYMBOL(g_devinfo_data);
-EXPORT_SYMBOL(g_devinfo_data_size);
-EXPORT_SYMBOL(get_devinfo_with_index);
-
-
 /**************************************************************************
  *  UTILITIES
  **************************************************************************/
@@ -227,24 +217,25 @@ unsigned int sbchk_verify(char* file_path, char* hash_val)
 #if SBCHK_BASE_HASH_CHECK
     {
         unsigned int i = 0;
-        char hash_rsn[HASH_OUTPUT_LEN*2+1] = {0}; 
-        char *hash_prsn = hash_rsn;
-
+        char hash_rsn[HASH_OUTPUT_LEN*2] = {0};
+        char *hash_rsnp =  hash_rsn;
 
         /* convert hash value to 'hex' string */
         for(i=0;i<HASH_OUTPUT_LEN;i++)
         {
-            sprintf(hash_prsn, "%02x", hash_rs[i]); 
-            hash_prsn += 2;
+            sprintf(hash_rsnp, "%02x", (char)(*hash_rs++)); 
+            hash_rsnp+=2; 
         }                 
-
 
         /* compare hash value */
         if(memcmp(hash_rsn,hash_val,HASH_OUTPUT_LEN) != 0)
         {            
             printk("[%s] Hash check fail. The value should be \n",MOD);
             sbchk_hex_string(hash_val,HASH_OUTPUT_LEN*2); 
+            printk("[%s] Instead of \n",MOD);            
+            sbchk_hex_string(hash_rsn,HASH_OUTPUT_LEN*2);             
             ret = SBCHK_BASE_HASH_CHECK_FAIL;
+            msleep(2000);
             goto _end;
         }
         else
@@ -353,20 +344,4 @@ void sbchk_base(void)
 #endif
 
 }
-
-/**************************************************************************
- *  GET devinfo info with index
- **************************************************************************/
-u32 get_devinfo_with_index(u32 index)
-{
-    int size = (sizeof(g_devinfo_data)/sizeof(u32));
-    if ((index >= 0) && (index < size)){
-        return g_devinfo_data[index];
-    }else{
-        printk("devinfo data index out of range:%d\n", index);    
-        printk("devinfo data size:%d\n", size);    
-        return SBCHK_BASE_INDEX_OUT_OF_RANGE;
-    }
-}
-
 

@@ -285,7 +285,7 @@ extern VOID ENABLE_PSM_MONITOR(void);
 extern INT32 wmt_lib_notify_stp_sleep(void);
 extern void wmt_lib_psm_lock_release(void);
 extern void wmt_lib_psm_lock_aquire(void);
-
+extern INT32 wmt_lib_set_stp_wmt_last_close(UINT32 value);
 /*******************************************************************************
 *                              F U N C T I O N S
 ********************************************************************************

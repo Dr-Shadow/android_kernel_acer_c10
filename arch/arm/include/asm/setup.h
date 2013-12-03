@@ -158,6 +158,12 @@ struct tag_meta_com {
     u32 meta_com_id;  /* multiple meta need to know com port id */
 };
 
+#define ATAG_HWID 0x4d534D72
+struct tag_hwid {
+        u32 rev;
+        //u32 bat_vol;
+};
+
 struct tag {
 	struct tag_header hdr;
 	union {
@@ -182,6 +188,7 @@ struct tag {
 		struct tag_memclk	memclk;
                 struct tag_boot         boot;
                 struct tag_meta_com     meta_com;
+				struct tag_hwid hwid;
 	} u;
 };
 

@@ -202,6 +202,8 @@ typedef struct
     /* Flag to identify STP by SDIO or UART */
     UINT32 f_mode;
     
+    /* Flag to indicate the last WMT CLOSE*/
+    UINT32 f_wmt_last_close;
 }mtkstp_context_struct;
 
 /*******************************************************************************
@@ -526,6 +528,7 @@ extern void stp_drv_exit(void);
 extern INT32 mtk_wcn_stp_dbg_log_ctrl(UINT32 on);
 extern INT32 mtk_wcn_stp_notify_sleep_for_thermal(void);
 
+extern INT32 mtk_wcn_stp_set_wmt_last_close(UINT32 value);
 /*******************************************************************************
 *                              F U N C T I O N S
 ********************************************************************************

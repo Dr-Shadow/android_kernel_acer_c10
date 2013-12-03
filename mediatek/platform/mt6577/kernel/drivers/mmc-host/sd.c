@@ -478,8 +478,8 @@ static int msdc_clk_stable(struct msdc_host *host,u32 mode, u32 div){
 		int retry_cnt = 1;
 		do{
 			retry = 3;
-        	sdr_set_field(MSDC_CFG, MSDC_CFG_CKDIV,(div + retry_cnt) % 0xff); 
-        	sdr_set_field(MSDC_CFG, MSDC_CFG_CKMOD, mode); 
+        	sdr_set_field(MSDC_CFG, MSDC_CFG_CKMOD|MSDC_CFG_CKDIV,(mode << 8)|((div + retry_cnt) % 0xff)); 
+            //sdr_set_field(MSDC_CFG, MSDC_CFG_CKMOD, mode); 
         	msdc_retry(!(sdr_read32(MSDC_CFG) & MSDC_CFG_CKSTB), retry, cnt,host->id);
 			if(retry == 0){
 					printk(KERN_ERR "msdc%d host->onclock(%d)\n",host->id,host->core_clkon);
@@ -519,7 +519,7 @@ static u32 hclks[] = {197000001, 197000000, 192000000, 0};
 
 /* VMCH is for T-card main power.
  * VMC for T-card when no emmc, for eMMC when has emmc. 
- * VGP2 for T-card when has emmc.
+ * VGP for T-card when has emmc.
  */
 u32 g_vmc  = 0;
 u32 g_vmch = 0;
@@ -575,13 +575,7 @@ static u32 msdc_sd1_power(u32 on, MT65XX_POWER_VOLTAGE powerVolt)
 	   else
 	   	  hwPowerDown_fpga();
 #else
-
-#if defined(TINNO_PROJECT_S9070)
-    msdc_ldo_power(on, MT65XX_POWER_LDO_VGP2, powerVolt, &g_vgp);
-#else
     msdc_ldo_power(on, MT65XX_POWER_LDO_VGP, powerVolt, &g_vgp);
-#endif
-
 #ifdef HW_LAYOUT_EVB
 #ifndef MTK_EMMC_SUPPORT
     msdc_ldo_power(on, MT65XX_POWER_LDO_VMC, powerVolt, &g_vmc);
@@ -595,12 +589,7 @@ static u32 msdc_sd1_power(u32 on, MT65XX_POWER_VOLTAGE powerVolt)
 
 static u32 msdc_sd1_power_switch(u32 on, MT65XX_POWER_VOLTAGE powerVolt)
 {
-#if defined(TINNO_PROJECT_S9070)
-    msdc_ldo_power(on, MT65XX_POWER_LDO_VGP2, powerVolt, &g_vgp);
-#else
     msdc_ldo_power(on, MT65XX_POWER_LDO_VGP, powerVolt, &g_vgp);
-#endif
-
 #ifdef HW_LAYOUT_EVB
 #ifndef MTK_EMMC_SUPPORT
     msdc_ldo_power(on, MT65XX_POWER_LDO_VMC, powerVolt, &g_vmc);
@@ -4277,15 +4266,6 @@ static void msdc_ops_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
     		sdr_write32(MSDC_DAT_RDDLY1, 0x00000000);
 #endif
     		sdr_write32(MSDC_IOCON,      0x00000000);
-//Ivan Enable data line delay for SDIO
-		if (is_card_sdio(host))
-		{
-		    sdr_set_field(MSDC_IOCON, MSDC_IOCON_DDLSEL, 1);
-		    sdr_set_field(MSDC_PAD_TUNE, MSDC_PAD_TUNE_CMDRDLY, host->hw->dat0rddly);
-//		    sdr_set_field(MSDC_PAD_TUNE, MSDC_PAD_TUNE_DATRRDLY, host->hw->dat0rddly);
-//		    sdr_set_field(MSDC_PAD_TUNE, MSDC_PAD_TUNE_DATWRDLY, host->hw->dat0rddly);
-		}
-
 	    	sdr_write32(MSDC_PATCH_BIT0, 0x403C000F); /* bit0 modified: Rx Data Clock Source: 1 -> 2.0*/
 			if (sdr_read32(MSDC_ECO_VER) >= 4) { 
         		if (host->id == SD_HOST_ID) {	
@@ -4370,12 +4350,6 @@ static void msdc_ops_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
             sdr_write32(MSDC_DAT_RDDLY1, 0x00000000);            
 #endif
             sdr_write32(MSDC_PAD_TUNE,   0x00000000);               	
-//Ivan Enable data line delay for SDIO
-	    if (is_card_sdio(host))
-	    {
-		sdr_set_field(MSDC_IOCON, MSDC_IOCON_DDLSEL, 1);
-		sdr_set_field(MSDC_PAD_TUNE, MSDC_PAD_TUNE_CMDRDLY, host->hw->dat0rddly);
-	    }
         }  
         msdc_set_mclk(host, ddr, ios->clock);        
     }
@@ -4875,13 +4849,6 @@ static void msdc_init_hw(struct msdc_host *host)
     sdr_set_bits(MSDC_PAD_CTL0, MSDC_PAD_CTL0_CLKSMT);
     sdr_set_bits(MSDC_PAD_CTL1, MSDC_PAD_CTL1_CMDSMT);
     sdr_set_bits(MSDC_PAD_CTL2, MSDC_PAD_CTL2_DATSMT);
-
-//Ivan Enable data line delay for SDIO
-    if (is_card_sdio(host))
-    {
-	sdr_set_field(MSDC_IOCON, MSDC_IOCON_DDLSEL, 1);
-	sdr_set_field(MSDC_PAD_TUNE, MSDC_PAD_TUNE_CMDRDLY, host->hw->dat0rddly);
-    }
 
     /* set clk, cmd, dat pad driving */
 

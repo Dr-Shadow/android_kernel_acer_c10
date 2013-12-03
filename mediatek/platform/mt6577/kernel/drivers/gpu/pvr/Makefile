@@ -81,7 +81,9 @@ pvrsrvkm-y := \
 	services4/srvkm/devices/sgx/mmu.o \
 	services4/srvkm/devices/sgx/pb.o \
     services4/system/mt657X/sysconfig.o \
-	services4/system/mt657X/sysutils.o
+	services4/system/mt657X/sysutils.o \
+    services4/srvkm/common/ttrace.o \
+    services4/srvkm/env/linux/mtk_debug.o
 
 mtklfb-y := \
 	services4/3rdparty/mtklfb/mtklfb_displayclass.o \

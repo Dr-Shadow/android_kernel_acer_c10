@@ -17,18 +17,17 @@
 #include <linux/amba/clcd.h>
 #include <linux/version.h>
 #include <linux/musbfsh.h>
-
 #include "mach/memory.h"
 #include "mach/irqs.h"
 #include "mach/mt_reg_base.h"
 #include "mach/mt_devs.h"
 #include "mach/mt_boot.h"
+#include <linux/proc_fs.h>	/* Necessary because we use the proc fs */
 
 /*NOTICE: the compile option should be defined if EFUSE is programed*/
-#define CONFIG_MTK_USB_UNIQUE_SERIAL
+/* #define CONFIG_MTK_USB_UNIQUE_SERIAL */
 #define SERIALNO_LEN 32
 static char serial_number[SERIALNO_LEN];
-#define USB_UNIQUE_HEX_SERIAL  1  //add by ljx
 
 extern BOOTMODE get_boot_mode(void);
 extern void adjust_kernel_cmd_line_setting_for_console(char*, char*);
@@ -313,7 +312,6 @@ static struct kobj_type sn_ktype = {
 #define HASH_ARRAY_SIZE 4
 
 static char udc_chr[32] = {"ABCDEFGHIJKLMNOPQRSTUVWSYZ456789"};
-static char udc_chr1[16] = {"0123456789ABCDEF"};
 int get_serial(uint64_t hwkey, uint32_t chipid, char ser[SERIALNO_LEN])
 {
     uint16_t hashkey[HASH_ARRAY_SIZE];
@@ -338,17 +336,6 @@ int get_serial(uint64_t hwkey, uint32_t chipid, char ser[SERIALNO_LEN])
         id = (id / 10);
     }
 
-#if USB_UNIQUE_HEX_SERIAL
-   ser_idx = 0;
-    for (idx = 0; idx < HASH_ARRAY_SIZE; idx++) {
-        ser[ser_idx++] = (hashkey[idx] & 0x000f);
-        ser[ser_idx++] = (hashkey[idx] & 0x00f0) >> 4;
-        ser[ser_idx++] = (hashkey[idx] & 0x0f00) >> 8;
-        ser[ser_idx++] = (hashkey[idx] & 0xf000) >> 12;
-    }
-    for (idx = 0; idx < ser_idx; idx++)
-        ser[idx] = udc_chr1[(int)ser[idx]];
-#else
     /* generate serail using hashkey */
     ser_idx = 0;
     for (idx = 0; idx < HASH_ARRAY_SIZE; idx++) {
@@ -359,7 +346,6 @@ int get_serial(uint64_t hwkey, uint32_t chipid, char ser[SERIALNO_LEN])
     }
     for (idx = 0; idx < ser_idx; idx++)
         ser[idx] = udc_chr[(int)ser[idx]];
-#endif
     ser[ser_idx] = 0x00;
     return 0;
 }
@@ -1069,6 +1055,64 @@ static int __init parse_tag_videofb_fixup(const struct tag *tags)
         use_bl_fb++;
 	return 0;
 }
+
+//[---start add by Rachel, 2012.10.10---]
+static char hw_rev[10];
+unsigned int HWID =0;
+module_param_string(hw_rev, hw_rev, sizeof(hw_rev), S_IWUSR | 0644);
+MODULE_PARM_DESC(hw_rev, "cust_project");
+
+static char * hw_rev_str[] = {"EVT", "DVT1", "DVT2", "PVT", "MP", "MP-B", "MP-W"};
+//unsigned int UbVbat = 0;  //[**Start add by Rachel,2012.11.13,add mtk patch**]
+
+int __init parse_tag_hwid(const struct tag *tags)
+{
+	int hwid = 0, find = 0;
+	struct tag *t = (struct tag *)tags;
+
+	for (; t->hdr.size; t = tag_next(t)) 
+	{
+		if (t->hdr.tag == ATAG_HWID) 
+		{
+			find = 1;
+			break;
+		}
+	}
+
+	if (find)
+	{
+		hwid = t->u.hwid.rev;
+		//UbVbat = t->u.hwid.bat_vol;   //[**Start add by Rachel,2012.11.13,add mtk patch**]
+		//printk("~~parse_tag_revision:UbVbat=%d \n",UbVbat);  //[**Start add by Rachel,2012.11.13,add mtk patch**]
+	}
+       HWID = hwid;
+     if(hwid >= 0 && hwid < ARRAY_SIZE(hw_rev_str))
+     {
+        strcpy(hw_rev, hw_rev_str[hwid]);
+     }
+
+     return hwid;
+}
+__tagtable(ATAG_HWID, parse_tag_hwid);
+
+
+static int prcb_hwid_proc_read(char *page, char **start, off_t off,
+				  int count, int *eof, void *data)
+{
+	char *p = page;
+	char * pcb_verion = (char  *) data;
+    
+	if (off != 0) {
+		*eof = 1;
+		return 0;
+	}
+
+	p += sprintf(p, "%s", pcb_verion);
+	
+	return (p - page);
+}
+//[---end add by Rachel, 2012.10.10---]
+
 void mt_fixup(struct tag *tags, char **cmdline, struct meminfo *mi)
 {
 #ifndef CONFIG_EARLY_LINUX_PORTING
@@ -1087,9 +1131,12 @@ void mt_fixup(struct tag *tags, char **cmdline, struct meminfo *mi)
 	for (; temp_tags->hdr.size; temp_tags = tag_next(temp_tags))
 	{
 		if(temp_tags->hdr.tag == ATAG_CMDLINE)
+		{
+            		//setup_cci_project(temp_tags->u.cmdline.cmdline);   //[---del by Rachel, 2012.10.10---]
 			cmdline_filter(temp_tags, (char*)&temp_command_line);
+		}
 	}
-
+	
     for (; tags->hdr.size; tags = tag_next(tags)) {
         if (tags->hdr.tag == ATAG_MEM) {
 	    bl_mem_sz += tags->u.mem.size;
@@ -1186,6 +1233,7 @@ void mt_fixup(struct tag *tags, char **cmdline, struct meminfo *mi)
                /* ATAG_NONE actual size */
                (uint32_t)(none_tag) - (uint32_t)(tag_next(cmdline_tag)) + 8);
     }
+    
 #endif
 #endif
 }
@@ -1306,10 +1354,6 @@ static struct platform_device actuator_dev = {
 	.name		  = "lens_actuator",
 	.id		  = -1,
 };
-static struct platform_device actuator_dev0 = {
-	.name		  = "lens_actuator0",
-	.id		  = -1,
-};
 /*=======================================================================*/
 /* MT6577 jogball                                                        */
 /*=======================================================================*/
@@ -1369,13 +1413,9 @@ __init int mt_board_init(void)
 
 	{
 		uint64_t key;
-#if defined(CONFIG_MTK_USB_UNIQUE_SERIAL)
-		if((g_boot_mode==META_BOOT)||(g_boot_mode==ATE_FACTORY_BOOT)||(g_boot_mode==ADVMETA_BOOT))
-			key=0;
-		else{
-			key = (uint32_t)__raw_readl(ES_CTR_BASE + 0x144);
-			key = (key << 32) | ((uint32_t)__raw_readl(ES_CTR_BASE + 0x140));
-		}
+#if 1//defined(CONFIG_MTK_USB_UNIQUE_SERIAL)
+		key = (uint32_t)__raw_readl(ES_CTR_BASE + 0x144);
+		key = (key << 32) | ((uint32_t)__raw_readl(ES_CTR_BASE + 0x140));
 #else
 		key = 0;
 #endif
@@ -1584,15 +1624,6 @@ __init int mt_board_init(void)
 	if (retval != 0)
 		return retval;
 
- #if defined(CUSTOM_KERNEL_ALSPS)
-	retval = platform_device_register(&sensor_alsps);
-		printk("sensor_alsps device!");
-	if (retval != 0)
-		return retval;
-#endif       
-
-
-
 #if defined(CUSTOM_KERNEL_ACCELEROMETER)
 	retval = platform_device_register(&sensor_gsensor);
 		printk("sensor_gsensor device!");
@@ -1627,7 +1658,12 @@ __init int mt_board_init(void)
 		return retval;
 #endif
 
-
+#if defined(CUSTOM_KERNEL_ALSPS)
+	retval = platform_device_register(&sensor_alsps);
+		printk("sensor_alsps device!");
+	if (retval != 0)
+		return retval;
+#endif
 #endif
 
 #if defined(CONFIG_MTK_USBFSH)
@@ -1738,12 +1774,6 @@ retval = platform_device_register(&dummychar_device);
         return retval;
     }
 #endif
-#if 1  //defined(CONFIG_ACTUATOR)
-    retval = platform_device_register(&actuator_dev0);
-    if (retval != 0){
-        return retval;
-    }
-#endif
 //
 #if 1 //defined(CONFIG_ISP_MT6577)
     retval = platform_device_register(&mt_isp_dev);
@@ -1785,6 +1815,10 @@ retval = platform_device_register(&dummychar_device);
 		return retval;
 	}
 
+	//[---del by Rachel, 2012.10.10---]
+	create_proc_read_entry("cust_project", 0644, NULL, prcb_hwid_proc_read, hw_rev);
+	//[---del by Rachel, 2012.10.10---]
+    
     return 0;
 }
 
