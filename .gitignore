@@ -84,4 +84,4 @@ GTAGS
 *.orig
 *~
 \#*#
-build_result/
+out/

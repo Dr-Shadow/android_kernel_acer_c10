@@ -1,1 +1,1 @@
-make TARGET_PRODUCT=s9081 MTK_ROOT_CUSTOM=../mediatek/custom clean mrproper
+make TARGET_PRODUCT=aa66 clean mrproper
